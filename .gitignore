@@ -1,0 +1,20 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Environment secrets
+.env
+
+# Application runtime logs & data
+*.log
+quarantine/
+quarantine_map.json
+yara-rules-full.yar
+db_version.txt
+temp.yar
+
+# IDE
+.vscode/
+.idea/
