@@ -93,6 +93,9 @@ class DeepScanApp(ctk.CTk):
         self.update_system_health()
         self.select_frame("dashboard")
 
+        # автообновление базы YARA: при старте и каждые 6 часов, только если есть новая версия
+        self.yara_engine.start_auto_update(self._on_auto_update)
+
     def t(self, key: str) -> str:
         return TRANSLATIONS[self.lang_code].get(key, key)
 
@@ -509,33 +512,22 @@ class DeepScanApp(ctk.CTk):
         threading.Thread(target=self.bg_update, daemon=True).start()
 
     def bg_update(self):
-        logger.info("Updating DB...")
-        try:
-            api = requests.get(YARA_API_URL, proxies=PROXY_CONFIG).json()
-            remote_ver = api.get('tag_name')
+        """Ручное обновление (кнопка): скачивает только если вышла новая версия."""
+        result = self.yara_engine.update_if_needed()
+        self.after(0, lambda: self._apply_db_update(result, manual=True))
 
-            assets = api.get('assets', [])
-            dl_url = next((a['browser_download_url'] for a in assets if
-                           'full' in a['name'].lower() and a['name'].endswith('.zip')), None)
+    def _on_auto_update(self, result):
+        # вызывается из фонового потока — переносим работу с UI в главный поток
+        self.after(0, lambda: self._apply_db_update(result, manual=False))
 
-            if dl_url:
-                r = requests.get(dl_url, stream=True, proxies=PROXY_CONFIG)
-                with zipfile.ZipFile(io.BytesIO(r.content)) as z:
-                    yar = next((n for n in z.namelist() if n.endswith(".yar")), None)
-                    with open("temp.yar", 'wb') as f: f.write(z.read(yar))
-
-                import yara
-                yara.compile(filepath="temp.yar")
-                import shutil
-                shutil.move("temp.yar", YARA_RULES_PATH)
-                with open(VERSION_FILE, 'w') as f: f.write(remote_ver)
-                logger.info("Update Success")
-                self.yara_engine.load_rules()
-                self.after(0, lambda: messagebox.showinfo("Success", "Updated!"))
-                self.after(0, self.check_local_db)
-                self.after(0, self.update_system_health)
-        except Exception as e:
-            logger.error(f"Update failed: {e}")
+    def _apply_db_update(self, result, manual=False):
+        self.check_local_db()
+        self.update_system_health()
+        if manual:
+            if result.status == "error":
+                messagebox.showerror("Update", result.message)
+            else:
+                messagebox.showinfo("Update", result.message)
 
     def check_local_db(self):
         if os.path.exists(VERSION_FILE):

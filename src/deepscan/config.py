@@ -1,7 +1,12 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+# Корень проекта (папка, где лежит main.py) и папка с данными, не зависящие от места запуска
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DATA_DIR = os.path.join(BASE_DIR, 'data')
+os.makedirs(DATA_DIR, exist_ok=True)
+
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 # --- Цветовая палитра (Cloudflare Style) ---
 CF_ORANGE = "#F38020"
@@ -16,11 +21,11 @@ COLOR_NEUTRAL = "#17a2b8"
 VIRUSTOTAL_API_KEY = os.getenv('VT_API_KEY')
 VT_SCAN_URL = 'https://www.virustotal.com/vtapi/v2/file/scan'
 VT_REPORT_URL = 'https://www.virustotal.com/vtapi/v2/file/report'
-YARA_RULES_PATH = 'yara-rules-full.yar'
-QUARANTINE_FOLDER = 'quarantine'
-QUARANTINE_MAP_FILE = 'quarantine_map.json'
-VERSION_FILE = 'db_version.txt'
-LOG_FILE = 'deepscan_full.log'
+YARA_RULES_PATH = os.path.join(DATA_DIR, 'yara-rules-full.yar')
+QUARANTINE_FOLDER = os.path.join(DATA_DIR, 'quarantine')
+QUARANTINE_MAP_FILE = os.path.join(DATA_DIR, 'quarantine_map.json')
+VERSION_FILE = os.path.join(DATA_DIR, 'db_version.txt')
+LOG_FILE = os.path.join(DATA_DIR, 'deepscan_full.log')
 YARA_API_URL = 'https://api.github.com/repos/YARAHQ/yara-forge/releases/latest'
 
 # Если прокси не указан в .env, запросы идут напрямую через интернет

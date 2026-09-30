@@ -18,3 +18,5 @@ temp.yar
 # IDE
 .vscode/
 .idea/
+data/
+.~lock.*#
