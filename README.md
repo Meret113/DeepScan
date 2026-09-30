@@ -131,7 +131,6 @@ Never commit your `.env` file. It is listed in `.gitignore`. Only `.env.example`
 
 ## License
 
-## License
 
 MIT. See [LICENSE](LICENSE).
 
